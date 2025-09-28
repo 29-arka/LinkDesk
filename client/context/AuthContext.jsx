@@ -14,7 +14,7 @@ export const AuthProvider = ({children}) => {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [socket, setSocket] = useState(null);
     
-    //check if user is authenticated and ig so, set the user data and connect the socket 
+    //check if user is authenticated and if so, set the user data and connect the socket 
 
     const checkAuth = async()=> {
         try {
@@ -32,19 +32,43 @@ export const AuthProvider = ({children}) => {
     
     const login = async (state, credentials)=>{
         try {
-            const {data} = await axios.post(`/api/auth/${state}`, credentials);
-            if(data.success) {
-                setAuthUser(data.userData);
-                connectSocket(data.userData);
-                axios.defaults.headers.common["token"] = data.token;
-                setToken(data.token)
-                localStorage.setItem("token", data.token)
-                toast.success(data.message)
+            const { data } = await axios.post(`/api/auth/${state}`, credentials);
+
+            if (data.success) {
+                if (state === "signup") {
+                    // Instead of logging in, call backend for OTP verification
+                    toast.success("OTP sent on email");
+
+                    // send OTP for verification
+                    const otpResponse = await axios.post("/api/auth/verify-otp", {
+                    email: credentials.email,
+                    otp: credentials.otp, // you’ll pass this from the user input
+                    });
+
+                    if (otpResponse.data.success) {
+                        setAuthUser(otpResponse.data.userData);
+                        connectSocket(otpResponse.data.userData);
+                        axios.defaults.headers.common["token"] = otpResponse.data.token;
+                        setToken(otpResponse.data.token);
+                        localStorage.setItem("token", otpResponse.data.token);
+                        toast.success(otpResponse.data.message);
+                    } else {
+                        toast.error(otpResponse.data.message);
+                    }
+                } else {
+                    // Normal login flow
+                    setAuthUser(data.userData);
+                    connectSocket(data.userData);
+                    axios.defaults.headers.common["token"] = data.token;
+                    setToken(data.token);
+                    localStorage.setItem("token", data.token);
+                    toast.success(data.message);
+                }
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.message);
         }
     }
 

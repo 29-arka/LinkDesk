@@ -6,6 +6,9 @@ const userSchema = new mongoose.Schema({
     fullName: { type: String, required: true},
     profilePic: {type: String, default: ""},
     bio: {type: String},
+    otp: {type: String},
+    otpExpiry: {type: Date},
+    isVerified: { type: Boolean, default: false }
     }, {timestamps: true});
 
 const User = mongoose.model("User", userSchema);
